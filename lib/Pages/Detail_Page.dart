@@ -1,11 +1,162 @@
+// import 'dart:io';
+// import 'package:firebase_storage/firebase_storage.dart';
+// import 'package:firepost/Models/model.dart';
+// import 'package:firepost/Services/hive_db.dart';
+// import 'package:firepost/Services/rtdb_servise.dart';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/material.dart';
+// import 'package:intl/intl.dart';
+//
+// class DetailPage extends StatefulWidget {
+//   static const String id = "detail_page";
+//   Post? post;
+//
+//   DetailPage({Key? key, this.post}) : super(key: key);
+//
+//   @override
+//   _DetailPageState createState() => _DetailPageState();
+// }
+//
+// class _DetailPageState extends State<DetailPage> {
+//   var isLoading = false;
+//   File? image;
+//   // final picker = ImagePicker();
+//   var firstNameController = TextEditingController();
+//   var lastNameController = TextEditingController();
+//   var dateController = TextEditingController();
+//   var contentController = TextEditingController();
+//
+//   _addPost() async {
+//     String firstName = firstNameController.text.trim().toString();
+//     String lastName = lastNameController.text.trim().toString();
+//     String content = contentController.text.trim().toString();
+//     DateTime date = DateTime.parse(dateController.text.trim().toString());
+//     if (dateController.text.isEmpty ||
+//         content.isEmpty ||
+//         firstName.isEmpty ||
+//         lastName.isEmpty) return;_apiAddPost(firstName,date,content,null);
+//     // _apiUploadImage(firstName + " " + lastName, date, content);
+//   }
+//
+//   // _apiUploadImage(String name, DateTime date, String content) {
+//   //   setState(() {
+//   //     isLoading = true;
+//   //   });
+//   //   if (widget.post != null) {
+//   //     image != null ?
+//   //     StoreService.uploadImage(image).then((image) =>
+//   //     {
+//   //       _apiUpdatePost(name, date, content, image)
+//   //     }) : _apiUpdatePost(name, date, content, widget.post!.image);
+//   //   }
+//   //   else {
+//   //     StoreService.uploadImage(image).then((image) =>
+//   //     {
+//   //       _apiAddPost(name, date, content, image)
+//   //     });
+//   //   }
+//   // }
+//
+//   _apiAddPost(String name, DateTime date, String content, String? image) async {
+//     var id = HiveDB.loadUid();
+//    await RTDBService.addPost(Post(userId: id!,
+//         name: name,
+//         content: content,
+//         date: date,
+//         image: image)).then((response) =>
+//     {
+//       _respAddPost(),
+//     });
+//   }
+//
+//   _apiUpdatePost(String name, DateTime date, String content,
+//       String? image) async {
+//     RTDBService.update(
+//         Post(userId: widget.post!.userId,
+//             key: widget.post!.key,
+//             name: name,
+//             date: date,
+//             content: content,
+//             image: image)).then((response) =>
+//     {
+//       _respAddPost(),
+//     });
+//   }
+//
+//   _respAddPost() {
+//     setState(() {
+//       isLoading = false;
+//     });
+//     Navigator.of(context).pop({'data': 'done'});
+//   }
+//
+//   // Future _getImage() async {
+//   //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+//   //   setState(() {
+//   //     if (pickedFile != null) {
+//   //       image = File(pickedFile.path);
+//   //     } else {
+//   //       if (kDebugMode) {
+//   //         print('No image selected.');
+//   //       }
+//   //     }
+//   //   });
+//   // }
+//
+//   @override
+//   void initState() {
+//     // TODO: implement initState
+//     super.initState();
+//     if (widget.post != null) {
+//       setState(() {
+//         firstNameController.text = widget.post!.name.split(" ")[0];
+//         lastNameController.text = widget.post!.name.split(" ")[1];
+//         contentController.text = widget.post!.content;
+//         dateController.text = widget.post!.date.toString().substring(0, 10);
+//       });
+//     }
+//   }
+//
+//   void _androidDialog() {
+//     showDialog(context: context, builder: (context) {
+//       return AlertDialog(
+//         title: const Text("Delete image"),
+//         content: const Text("Are you sure to delete the image?"),
+//         actions: [
+//           TextButton(
+//               onPressed: () {
+//                 Navigator.pop(context);
+//               },
+//               child: const Text("Cancel", style: TextStyle(color: Colors.red, fontSize: 16),)),
+//           TextButton(onPressed: () {
+//             setState(() {
+//               if (widget.post!.image != null) {
+//                 FirebaseStorage.instance.refFromURL(
+//                     widget.post!.image!).delete();
+//               } else if (image != null) {
+//                 image!.delete();
+//               }
+//               widget.post!.image = null;
+//               Navigator.pop(context);
+//             });
+//           }, child: const Text("Confirm", style: TextStyle(fontSize: 16),)),
+//         ],
+//
+//       );
+//     });
+//   }
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firepost/Models/model.dart';
 import 'package:firepost/Services/hive_db.dart';
+import 'package:firepost/Services/imagepicker.dart';
 import 'package:firepost/Services/rtdb_servise.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+
+
 
 class DetailPage extends StatefulWidget {
   static const String id = "detail_page";
@@ -20,7 +171,7 @@ class DetailPage extends StatefulWidget {
 class _DetailPageState extends State<DetailPage> {
   var isLoading = false;
   File? image;
-  // final picker = ImagePicker();
+  final picker = ImagePicker();
   var firstNameController = TextEditingController();
   var lastNameController = TextEditingController();
   var dateController = TextEditingController();
@@ -34,38 +185,40 @@ class _DetailPageState extends State<DetailPage> {
     if (dateController.text.isEmpty ||
         content.isEmpty ||
         firstName.isEmpty ||
-        lastName.isEmpty) return;_apiAddPost(firstName,date,content,null);
-    // _apiUploadImage(firstName + " " + lastName, date, content);
+        lastName.isEmpty) return;
+    // _apiUploadImage(firstName, date, content);
+    _apiUploadImage(firstName + " " + lastName, date, content,  image);
   }
 
-  // _apiUploadImage(String name, DateTime date, String content) {
-  //   setState(() {
-  //     isLoading = true;
-  //   });
-  //   if (widget.post != null) {
-  //     image != null ?
-  //     StoreService.uploadImage(image).then((image) =>
-  //     {
-  //       _apiUpdatePost(name, date, content, image)
-  //     }) : _apiUpdatePost(name, date, content, widget.post!.image);
-  //   }
-  //   else {
-  //     StoreService.uploadImage(image).then((image) =>
-  //     {
-  //       _apiAddPost(name, date, content, image)
-  //     });
-  //   }
-  // }
+  _apiUploadImage(String name, DateTime date, String content, File? image) {
+    setState(() {
+      isLoading = true;
+    });
+    if (widget.post != null) {
+      image != null ?
+      StoreService.uploadFile(image).then((image) =>
+      {
+        _apiUpdatePost(name, date, content, image)
+      }) : _apiUpdatePost(name, date, content, widget.post!.image);
+    }
+    else {
+      StoreService.uploadFile(image).then((image) =>
+      {
+        _apiAddPost(name, date, content, image)
+      });
+    }
+  }
 
   _apiAddPost(String name, DateTime date, String content, String? image) async {
     var id = HiveDB.loadUid();
-    RTDBService.addPost(Post(userId: id!,
+    await RTDBService.addPost(Post(
+        userId: id!,
         name: name,
         content: content,
         date: date,
         image: image)).then((response) =>
     {
-      _respAddPost(),
+      _respAddPost(response),
     });
   }
 
@@ -77,31 +230,33 @@ class _DetailPageState extends State<DetailPage> {
             name: name,
             date: date,
             content: content,
-            image: image)).then((response) =>
-    {
-      _respAddPost(),
+            image: image)).then((response)
+    { if (response !=null){
+      _respAddPost(response);
+    }
+
     });
   }
 
-  _respAddPost() {
+  _respAddPost(response) {
     setState(() {
       isLoading = false;
     });
-    Navigator.of(context).pop({'data': 'done'});
+    Navigator.of(context).pop(true);
   }
 
-  // Future _getImage() async {
-  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-  //   setState(() {
-  //     if (pickedFile != null) {
-  //       image = File(pickedFile.path);
-  //     } else {
-  //       if (kDebugMode) {
-  //         print('No image selected.');
-  //       }
-  //     }
-  //   });
-  // }
+  Future _getImage() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      if (pickedFile != null) {
+        image = File(pickedFile.path);
+      } else {
+        if (kDebugMode) {
+          print('No image selected.');
+        }
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -145,7 +300,6 @@ class _DetailPageState extends State<DetailPage> {
       );
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,20 +327,19 @@ class _DetailPageState extends State<DetailPage> {
               child: Column(
                 children: [
                   InkWell(
-                    // onTap: _getImage,
-                    onLongPress: () {
-                      if (widget.post!.image != null || image != null) {
-                        _androidDialog();
-                      }
-                    },
+                    onTap: _getImage,
+                    // onLongPress: () {
+                    //   if (widget.post!.image != null || image != null) {
+                    //     _androidDialog();
+                    //   }
+                    // },
                     child: SizedBox(
                       height: 100,
                       width: 100,
                       child: image != null ?
                       Image.file(image!, fit: BoxFit.cover)
                           : widget.post == null || widget.post!.image == null
-                          ? Image.asset(
-                          "assets/images/image_detail.jpg")
+                          ? Center(child: Icon(Icons.image),)
                           : Image.network(
                         widget.post!.image!, fit: BoxFit.cover,),
                     ),

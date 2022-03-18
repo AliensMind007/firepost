@@ -3,6 +3,7 @@ import 'package:firepost/Pages/Detail_Page.dart';
 import 'package:firepost/Pages/HomePage.dart';
 import 'package:firepost/Pages/SignInPage.dart';
 import 'package:firepost/Pages/SignUpPage.dart';
+
 import 'package:firepost/Services/hive_db.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
       title: "Fire Post",
       home: SignUpPage(),
       routes: {
-        HomePage.id: (context) => HomePage(),
+        HomePage.id:(context)=>HomePage(),
         SignUpPage.id: (context) => SignUpPage(),
         SignInPage.id: (context) => SignInPage(),
         DetailPage.id: (context) => DetailPage(),

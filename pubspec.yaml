@@ -24,6 +24,7 @@ dependencies:
   hive_flutter:
   hive: ^2.0.6
   path:
+  cached_network_image:
 
 dev_dependencies:
   flutter_test:
